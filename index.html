@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MilkFlow — Smart Milk Shop Management</title>
+  <meta name="description"
+    content="Complete Milk Shop Management System — Track suppliers, stock, sales, and daily closing with a beautiful modern interface." />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥛</text></svg>" />
+</head>
+
+<body>
+
+  <!-- ======================== LOGIN SCREEN ======================== -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="login-logo">🥛</div>
+      <h2>MilkFlow</h2>
+      <p class="subtitle">Smart Milk Shop Management</p>
+      <form id="loginForm" autocomplete="off">
+        <div class="form-group">
+          <label for="loginUser">Username</label>
+          <input type="text" id="loginUser" class="form-control" placeholder="Enter username" required />
+        </div>
+        <div class="form-group">
+          <label for="loginPass">Password</label>
+          <input type="password" id="loginPass" class="form-control" placeholder="Enter password" required />
+        </div>
+        <div class="form-group">
+          <label for="loginRole">Role</label>
+          <select id="loginRole" class="form-control">
+            <option value="owner">Owner</option>
+            <option value="staff">Staff</option>
+          </select>
+        </div>
+        <p class="login-error" id="loginError">Invalid credentials. Please try again.</p>
+        <button type="submit" class="btn btn-primary btn-lg" style="width:100%">
+          🔐 Sign In
+        </button>
+      </form>
+      <p class="mt-lg text-muted" style="font-size:0.75rem;">
+        Manage login credentials in Settings → User Management
+      </p>
+    </div>
+  </div>
+
+  <!-- ======================== APP CONTAINER ======================== -->
+  <div class="app-container" id="appContainer" style="display:none;">
+
+    <!-- === Mobile Overlay === -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ======================== SIDEBAR ======================== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">🥛</div>
+        <div class="sidebar-brand">
+          <h1>MilkFlow</h1>
+          <span>Management Console</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Main Menu</div>
+        <div class="nav-item active" data-page="dashboard" id="navDashboard">
+          <span class="icon">📊</span> Dashboard
+        </div>
+        <div class="nav-item" data-page="suppliers" id="navSuppliers">
+          <span class="icon">🤝</span> Suppliers
+        </div>
+        <div class="nav-item" data-page="stock" id="navStock">
+          <span class="icon">📦</span> Stock Entry
+        </div>
+        <div class="nav-item" data-page="storage" id="navStorage">
+          <span class="icon">🏪</span> Storage Log
+        </div>
+        <div class="nav-item" data-page="sales" id="navSales">
+          <span class="icon">💰</span> Sales
+        </div>
+
+        <div class="nav-section-title">Operations</div>
+        <div class="nav-item" data-page="closing" id="navClosing">
+          <span class="icon">📋</span> Day Closing
+        </div>
+        <div class="nav-item" data-page="backup" id="navBackup">
+          <span class="icon">💾</span> Backup
+        </div>
+        <div class="nav-item" data-page="settings" id="navSettings">
+          <span class="icon">⚙️</span> Settings
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info" id="userInfoBtn">
+          <div class="user-avatar" id="userAvatar">O</div>
+          <div class="user-details">
+            <div class="name" id="userName">Owner</div>
+            <div class="role" id="userRole">Owner Access</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ======================== MAIN CONTENT ======================== -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+          <div class="page-title-section">
+            <h2 id="pageTitle">Dashboard</h2>
+            <p id="pageSubtitle">Overview of today's operations</p>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="header-date" id="headerDate"></div>
+          <button class="header-btn" id="notifBtn" title="Notifications">
+            🔔 <span class="notif-dot" id="notifDot"></span>
+          </button>
+          <button class="header-btn" id="logoutBtn" title="Logout">🚪</button>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <div class="page-content">
+
+        <!-- Day Locked Banner -->
+        <div class="day-locked-banner" id="dayLockedBanner">
+          <span class="lock-icon">🔒</span>
+          <div>
+            <strong>Day is Closed & Locked</strong> — Today's records have been finalized. No further entries can be
+            made for today.
+          </div>
+        </div>
+
+        <!-- ============ DASHBOARD ============ -->
+        <div class="page-view active" id="pageDashboard">
+          <!-- Stats -->
+          <div class="stats-grid">
+            <div class="stat-card primary">
+              <div class="stat-icon">📦</div>
+              <div class="stat-label">Current Stock</div>
+              <div class="stat-value" id="dashStock">0 L</div>
+              <div class="stat-change up" id="dashStockChange">—</div>
+            </div>
+            <div class="stat-card success">
+              <div class="stat-icon">💰</div>
+              <div class="stat-label">Today's Revenue</div>
+              <div class="stat-value" id="dashRevenue">₹0</div>
+              <div class="stat-change up" id="dashRevenueChange">—</div>
+            </div>
+            <div class="stat-card accent">
+              <div class="stat-icon">🛒</div>
+              <div class="stat-label">Today's Sales</div>
+              <div class="stat-value" id="dashSalesCount">0</div>
+              <div class="stat-change" id="dashSalesChange">—</div>
+            </div>
+            <div class="stat-card danger">
+              <div class="stat-icon">🤝</div>
+              <div class="stat-label">Active Suppliers</div>
+              <div class="stat-value" id="dashSuppliers">0</div>
+              <div class="stat-change" id="dashSupChange">—</div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <h3 class="mb-md" style="font-size:1rem;">⚡ Quick Actions</h3>
+          <div class="quick-actions">
+            <button class="quick-action-btn" onclick="MilkApp.navigate('stock')">
+              <div class="qa-icon">📦</div>
+              <div class="qa-label">Add Stock</div>
+            </button>
+            <button class="quick-action-btn" onclick="MilkApp.navigate('sales')">
+              <div class="qa-icon">💰</div>
+              <div class="qa-label">Record Sale</div>
+            </button>
+            <button class="quick-action-btn" onclick="MilkApp.navigate('suppliers')">
+              <div class="qa-icon">🤝</div>
+              <div class="qa-label">Manage Suppliers</div>
+            </button>
+            <button class="quick-action-btn" onclick="MilkApp.navigate('closing')">
+              <div class="qa-icon">📋</div>
+              <div class="qa-label">Day Closing</div>
+            </button>
+          </div>
+
+          <!-- Recent Activity & Today's Summary -->
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <h3><span class="live-pulse"></span> Recent Activity</h3>
+              </div>
+              <div class="card-body">
+                <ul class="activity-list" id="activityList">
+                  <li class="empty-state" style="padding:24px 0;">
+                    <div class="empty-icon">📭</div>
+                    <h4>No activity yet</h4>
+                    <p>Start by adding a supplier or recording a sale</p>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h3>📈 Today's Breakdown</h3>
+              </div>
+              <div class="card-body">
+                <div class="report-row">
+                  <span class="label">Cash Sales</span>
+                  <span class="value" id="dashCashSales">₹0</span>
+                </div>
+                <div class="report-row">
+                  <span class="label">UPI Sales</span>
+                  <span class="value" id="dashUpiSales">₹0</span>
+                </div>
+                <div class="report-row">
+                  <span class="label">Milk Purchased</span>
+                  <span class="value" id="dashPurchased">0 L</span>
+                </div>
+                <div class="report-row">
+                  <span class="label">Milk Sold</span>
+                  <span class="value" id="dashSold">0 L</span>
+                </div>
+                <div class="report-row total">
+                  <span class="label">Net Position</span>
+                  <span class="value positive" id="dashNet">₹0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ SUPPLIERS ============ -->
+        <div class="page-view" id="pageSuppliers">
+          <div class="flex-between mb-xl">
+            <div>
+              <h3 style="font-size:1rem;">All Suppliers</h3>
+              <p class="text-muted" style="font-size:0.82rem;">Manage your milk suppliers and track their ledgers</p>
+            </div>
+            <button class="btn btn-primary" id="addSupplierBtn">➕ Add Supplier</button>
+          </div>
+
+          <div class="card" id="supplierListCard">
+            <div class="table-wrapper">
+              <table id="supplierTable">
+                <thead>
+                  <tr>
+                    <th>Supplier</th>
+                    <th>Contact</th>
+                    <th>Total Supplied</th>
+                    <th>Total Paid</th>
+                    <th>Balance</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="supplierTableBody">
+                </tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="supplierEmpty">
+              <div class="empty-icon">🤝</div>
+              <h4>No suppliers yet</h4>
+              <p>Add your first milk supplier to get started with tracking</p>
+              <button class="btn btn-primary" onclick="MilkApp.showSupplierModal()">➕ Add Supplier</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ STOCK ENTRY ============ -->
+        <div class="page-view" id="pageStock">
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <h3>📦 Record Stock Entry</h3>
+              </div>
+              <div class="card-body">
+                <form id="stockForm">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="stockDate">Date</label>
+                      <input type="date" id="stockDate" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="stockSupplier">Supplier</label>
+                      <select id="stockSupplier" class="form-control" required>
+                        <option value="">Select Supplier</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="stockQty">Quantity (Litres)</label>
+                      <input type="number" id="stockQty" class="form-control" step="0.5" min="0" placeholder="e.g. 50"
+                        required />
+                    </div>
+                    <div class="form-group">
+                      <label for="stockCost">Cost Paid (₹)</label>
+                      <input type="number" id="stockCost" class="form-control" step="0.01" min="0"
+                        placeholder="e.g. 2500" required />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="stockNotes">Notes (Optional)</label>
+                    <input type="text" id="stockNotes" class="form-control" placeholder="Any additional notes..." />
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">
+                    📦 Add Stock Entry
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>📋 Recent Stock Entries</h3>
+              </div>
+              <div class="card-body" style="max-height:500px;overflow-y:auto;">
+                <div id="stockEntriesList">
+                  <div class="empty-state" style="padding:32px 0">
+                    <div class="empty-icon">📦</div>
+                    <h4>No stock entries yet</h4>
+                    <p>Record your first milk purchase</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ STORAGE LOG ============ -->
+        <div class="page-view" id="pageStorage">
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <h3>🏪 Add Storage Log</h3>
+              </div>
+              <div class="card-body">
+                <form id="storageForm">
+                  <div class="form-group">
+                    <label for="storageDate">Date</label>
+                    <input type="date" id="storageDate" class="form-control" required />
+                  </div>
+                  <div class="form-group">
+                    <label for="storageQty">Stock Stored (Litres)</label>
+                    <input type="number" id="storageQty" class="form-control" step="0.5" min="0" placeholder="e.g. 40"
+                      required />
+                  </div>
+                  <div class="form-group">
+                    <label for="storageNotes">Notes</label>
+                    <textarea id="storageNotes" class="form-control"
+                      placeholder="Temperature, condition, storage location..." rows="3"></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-accent btn-lg" style="width:100%;">
+                    🏪 Save Storage Log
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>📋 Storage History</h3>
+              </div>
+              <div class="card-body" style="max-height:500px;overflow-y:auto;">
+                <div id="storageLogList">
+                  <div class="empty-state" style="padding:32px 0">
+                    <div class="empty-icon">🏪</div>
+                    <h4>No storage logs yet</h4>
+                    <p>Start logging your milk storage</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ SALES ============ -->
+        <div class="page-view" id="pageSales">
+          <!-- Sales Tabs -->
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="newSale">💰 New Sale</button>
+            <button class="tab-btn" data-tab="salesHistory">📋 Sales History</button>
+          </div>
+
+          <!-- New Sale Tab -->
+          <div class="tab-content active" id="tabNewSale">
+            <div class="grid-2">
+              <div class="card">
+                <div class="card-header">
+                  <h3>💰 Record Sale</h3>
+                </div>
+                <div class="card-body">
+                  <form id="saleForm">
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label for="saleDate">Date</label>
+                        <input type="date" id="saleDate" class="form-control" required />
+                      </div>
+                      <div class="form-group">
+                        <label for="saleMode">Payment Mode</label>
+                        <select id="saleMode" class="form-control" required>
+                          <option value="cash">💵 Cash</option>
+                          <option value="upi">📱 UPI</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label for="saleQty">Quantity Sold (Litres)</label>
+                        <input type="number" id="saleQty" class="form-control" step="0.5" min="0" placeholder="e.g. 5"
+                          required />
+                      </div>
+                      <div class="form-group">
+                        <label for="saleAmount">Amount (₹)</label>
+                        <input type="number" id="saleAmount" class="form-control" step="0.01" min="0"
+                          placeholder="e.g. 250" required />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="saleCustomer">Customer Name (Optional)</label>
+                      <input type="text" id="saleCustomer" class="form-control" placeholder="Walk-in customer" />
+                    </div>
+                    <div class="form-group">
+                      <label for="saleNotes">Notes (Optional)</label>
+                      <input type="text" id="saleNotes" class="form-control" placeholder="Any notes..." />
+                    </div>
+                    <button type="submit" class="btn btn-success btn-lg" style="width:100%;">
+                      💰 Record Sale
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <div>
+                <!-- Today's Sales Summary -->
+                <div class="card mb-lg">
+                  <div class="card-header">
+                    <h3>📈 Today's Sales Summary</h3>
+                  </div>
+                  <div class="card-body">
+                    <div class="closing-summary" style="margin-bottom:0;">
+                      <div class="summary-item">
+                        <div class="s-label">Total Sales</div>
+                        <div class="s-value" id="salesTotalCount">0</div>
+                      </div>
+                      <div class="summary-item">
+                        <div class="s-label">Cash</div>
+                        <div class="s-value text-success" id="salesTotalCash">₹0</div>
+                      </div>
+                      <div class="summary-item">
+                        <div class="s-label">UPI</div>
+                        <div class="s-value text-primary" id="salesTotalUpi">₹0</div>
+                      </div>
+                      <div class="summary-item highlight">
+                        <div class="s-label">Total Revenue</div>
+                        <div class="s-value" id="salesTotalRevenue">₹0</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Available Stock Info -->
+                <div class="card">
+                  <div class="card-header">
+                    <h3>📊 Stock Info</h3>
+                  </div>
+                  <div class="card-body">
+                    <div class="report-row">
+                      <span class="label">Available Stock</span>
+                      <span class="value" id="salesAvailStock">0 L</span>
+                    </div>
+                    <div class="report-row">
+                      <span class="label">Today Purchased</span>
+                      <span class="value" id="salesTodayPurchased">0 L</span>
+                    </div>
+                    <div class="report-row">
+                      <span class="label">Today Sold</span>
+                      <span class="value" id="salesTodaySold">0 L</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sales History Tab -->
+          <div class="tab-content" id="tabSalesHistory">
+            <div class="card">
+              <div class="card-header">
+                <h3>📋 Sales History</h3>
+                <div class="flex gap-sm">
+                  <input type="date" id="salesFilterDate" class="form-control" style="width:auto;height:36px;" />
+                  <button class="btn btn-ghost btn-sm" onclick="MilkApp.filterSales()">🔍 Filter</button>
+                  <button class="btn btn-ghost btn-sm" onclick="MilkApp.clearSalesFilter()">✖ Clear</button>
+                </div>
+              </div>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Customer</th>
+                      <th>Qty (L)</th>
+                      <th>Amount</th>
+                      <th>Payment</th>
+                      <th>Time</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="salesTableBody">
+                  </tbody>
+                </table>
+              </div>
+              <div class="empty-state" id="salesEmpty" style="display:none;">
+                <div class="empty-icon">💰</div>
+                <h4>No sales recorded</h4>
+                <p>Start recording sales to see them here</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ DAY CLOSING ============ -->
+        <div class="page-view" id="pageClosing">
+          <div class="card mb-xl">
+            <div class="card-header">
+              <h3>📋 End of Day Summary</h3>
+              <span class="badge badge-primary" id="closingDateBadge"></span>
+            </div>
+            <div class="card-body">
+              <div class="closing-summary" id="closingSummaryGrid">
+                <div class="summary-item">
+                  <div class="s-label">Opening Stock</div>
+                  <div class="s-value" id="closingOpenStock">0 L</div>
+                </div>
+                <div class="summary-item">
+                  <div class="s-label">Purchased</div>
+                  <div class="s-value text-primary" id="closingPurchased">0 L</div>
+                </div>
+                <div class="summary-item">
+                  <div class="s-label">Total Sold</div>
+                  <div class="s-value text-danger" id="closingSold">0 L</div>
+                </div>
+                <div class="summary-item highlight">
+                  <div class="s-label">Closing Stock</div>
+                  <div class="s-value" id="closingStock">0 L</div>
+                </div>
+                <div class="summary-item">
+                  <div class="s-label">Cash Revenue</div>
+                  <div class="s-value text-success" id="closingCash">₹0</div>
+                </div>
+                <div class="summary-item">
+                  <div class="s-label">UPI Revenue</div>
+                  <div class="s-value text-primary" id="closingUpi">₹0</div>
+                </div>
+                <div class="summary-item">
+                  <div class="s-label">Total Expenses</div>
+                  <div class="s-value text-danger" id="closingExpenses">₹0</div>
+                </div>
+                <div class="summary-item highlight">
+                  <div class="s-label">Net Profit</div>
+                  <div class="s-value" id="closingProfit">₹0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Close Day Button (Owner only) -->
+          <div class="text-center" id="closeDaySection">
+            <p class="text-muted mb-md" style="font-size:0.85rem;">
+              🔒 Closing the day will lock all records for today. This cannot be undone.
+            </p>
+            <button class="btn btn-warning btn-lg" id="closeDayBtn" onclick="MilkApp.confirmCloseDay()">
+              🔒 Close Day & Lock Records
+            </button>
+          </div>
+
+          <!-- Past Closings -->
+          <div class="card mt-xl">
+            <div class="card-header">
+              <h3>📚 Past Day Closings</h3>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Opening</th>
+                    <th>Purchased</th>
+                    <th>Sold</th>
+                    <th>Closing</th>
+                    <th>Revenue</th>
+                    <th>Expenses</th>
+                    <th>Profit</th>
+                  </tr>
+                </thead>
+                <tbody id="closingHistoryBody">
+                </tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="closingHistoryEmpty">
+              <div class="empty-icon">📚</div>
+              <h4>No closings yet</h4>
+              <p>Close your first day to see history here</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ BACKUP ============ -->
+        <div class="page-view" id="pageBackup">
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <h3>💾 Generate Backup</h3>
+              </div>
+              <div class="card-body text-center" style="padding:48px 24px;">
+                <div style="font-size:4rem;margin-bottom:16px;">💾</div>
+                <h4 class="mb-sm">Export Your Data</h4>
+                <p class="text-muted mb-lg" style="font-size:0.85rem;">
+                  Generate a complete JSON backup of all your data including suppliers, stock, sales, and closing
+                  records.
+                </p>
+                <button class="btn btn-primary btn-lg" onclick="MilkApp.generateBackup()">
+                  📥 Download Backup File
+                </button>
+                <p class="text-muted mt-lg" style="font-size:0.75rem;">
+                  File format: MilkShop_YYYYMMDD_HHMMSS.json
+                </p>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>📂 Restore Data</h3>
+              </div>
+              <div class="card-body text-center" style="padding:48px 24px;">
+                <div style="font-size:4rem;margin-bottom:16px;">📂</div>
+                <h4 class="mb-sm">Import Backup</h4>
+                <p class="text-muted mb-lg" style="font-size:0.85rem;">
+                  Restore data from a previously generated backup file. This will replace all current data.
+                </p>
+                <label class="btn btn-ghost btn-lg" for="restoreFile" style="cursor:pointer;">
+                  📤 Choose Backup File
+                </label>
+                <input type="file" id="restoreFile" accept=".json" style="display:none;"
+                  onchange="MilkApp.restoreBackup(event)" />
+                <p class="text-muted mt-lg" style="font-size:0.75rem;">
+                  Only .json backup files are supported
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Backup History -->
+          <div class="card mt-xl">
+            <div class="card-header">
+              <h3>📋 Backup Log</h3>
+            </div>
+            <div class="card-body">
+              <div id="backupLog">
+                <div class="empty-state" style="padding:24px 0;">
+                  <div class="empty-icon">📋</div>
+                  <h4>No backups generated yet</h4>
+                  <p>Your backup history will appear here</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ SETTINGS ============ -->
+        <div class="page-view" id="pageSettings">
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <h3>🏪 Shop Settings</h3>
+              </div>
+              <div class="card-body">
+                <form id="settingsForm">
+                  <div class="form-group">
+                    <label for="shopName">Shop Name</label>
+                    <input type="text" id="shopName" class="form-control" placeholder="My Milk Shop" />
+                  </div>
+                  <div class="form-group">
+                    <label for="shopAddress">Address</label>
+                    <input type="text" id="shopAddress" class="form-control" placeholder="Shop address..." />
+                  </div>
+                  <div class="form-group">
+                    <label for="shopPhone">Phone</label>
+                    <input type="tel" id="shopPhone" class="form-control" placeholder="+91 XXXXX XXXXX" />
+                  </div>
+                  <div class="form-group">
+                    <label for="defaultPrice">Default Milk Price (₹/Litre)</label>
+                    <input type="number" id="defaultPrice" class="form-control" step="0.5" min="0"
+                      placeholder="e.g. 50" />
+                  </div>
+                  <button type="submit" class="btn btn-primary" style="width:100%;">💾 Save Settings</button>
+                </form>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>👤 Current Session</h3>
+              </div>
+              <div class="card-body">
+                <div class="report-row">
+                  <span class="label">Username</span>
+                  <span class="value" id="accUsername">—</span>
+                </div>
+                <div class="report-row">
+                  <span class="label">Role</span>
+                  <span class="value" id="accRole">—</span>
+                </div>
+                <div class="report-row">
+                  <span class="label">Status</span>
+                  <span class="badge badge-success">🟢 Active</span>
+                </div>
+                <p class="text-muted mt-lg" style="font-size:0.78rem;">To change your credentials, use the User
+                  Management section below.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- User Management -->
+          <div class="card mt-xl">
+            <div class="card-header">
+              <h3>🔐 User Management</h3>
+              <button class="btn btn-primary btn-sm" id="addUserBtn" onclick="MilkApp.showUserModal()">➕ Add
+                User</button>
+            </div>
+            <div class="card-body">
+              <p class="text-muted mb-lg" style="font-size:0.82rem;">Manage all login accounts. You can change
+                usernames, passwords, display names, and roles at any time.</p>
+              <div class="table-wrapper">
+                <table id="usersTable">
+                  <thead>
+                    <tr>
+                      <th>Display Name</th>
+                      <th>Username</th>
+                      <th>Password</th>
+                      <th>Role</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="usersTableBody">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Danger Zone -->
+          <div class="card mt-xl" style="border-color:rgba(239,68,68,0.3);">
+            <div class="card-header">
+              <h3 class="text-danger">⚠️ Danger Zone</h3>
+            </div>
+            <div class="card-body">
+              <div class="flex-between">
+                <div>
+                  <strong>Clear All Data</strong>
+                  <p class="text-muted" style="font-size:0.82rem;">This will permanently delete all your data. Generate
+                    a backup first!</p>
+                </div>
+                <button class="btn btn-danger" onclick="MilkApp.confirmClearData()">🗑️ Clear All Data</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- End page-content -->
+    </main>
+  </div><!-- End app-container -->
+
+  <!-- ======================== MODALS ======================== -->
+
+  <!-- Supplier Modal -->
+  <div class="modal-overlay" id="supplierModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="supplierModalTitle">Add Supplier</h3>
+        <button class="modal-close" onclick="MilkApp.closeModal('supplierModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="supplierForm">
+          <input type="hidden" id="supplierId" />
+          <div class="form-group">
+            <label for="supplierName">Supplier Name</label>
+            <input type="text" id="supplierName" class="form-control" placeholder="e.g. Ramesh Dairy" required />
+          </div>
+          <div class="form-group">
+            <label for="supplierContact">Contact Number</label>
+            <input type="tel" id="supplierContact" class="form-control" placeholder="+91 XXXXX XXXXX" required />
+          </div>
+          <div class="form-group">
+            <label for="supplierAddress">Address</label>
+            <textarea id="supplierAddress" class="form-control" placeholder="Supplier address..." rows="2"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="MilkApp.closeModal('supplierModal')">Cancel</button>
+        <button class="btn btn-primary" id="supplierSaveBtn" onclick="MilkApp.saveSupplier()">💾 Save Supplier</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Management Modal -->
+  <div class="modal-overlay" id="userModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="userModalTitle">Add User</h3>
+        <button class="modal-close" onclick="MilkApp.closeModal('userModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="userForm">
+          <input type="hidden" id="editUserIndex" value="" />
+          <div class="form-group">
+            <label for="userDisplayName">Display Name</label>
+            <input type="text" id="userDisplayName" class="form-control" placeholder="e.g. Shop Owner" required />
+          </div>
+          <div class="form-group">
+            <label for="userUsername">Username</label>
+            <input type="text" id="userUsername" class="form-control" placeholder="e.g. owner" required />
+          </div>
+          <div class="form-group">
+            <label for="userPassword">Password</label>
+            <input type="text" id="userPassword" class="form-control" placeholder="Enter password" required />
+            <p class="text-muted mt-sm" style="font-size:0.72rem;">Password is shown in plain text for easy management
+            </p>
+          </div>
+          <div class="form-group">
+            <label for="userRoleSelect">Role</label>
+            <select id="userRoleSelect" class="form-control" required>
+              <option value="owner">Owner (Full Access)</option>
+              <option value="staff">Staff (Limited Access)</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="MilkApp.closeModal('userModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="MilkApp.saveUser()">💾 Save User</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Dialog -->
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-dialog">
+      <div class="confirm-icon" id="confirmIcon">⚠️</div>
+      <h3 id="confirmTitle">Are you sure?</h3>
+      <p id="confirmMessage">This action cannot be undone.</p>
+      <div class="confirm-actions">
+        <button class="btn btn-ghost" onclick="MilkApp.closeConfirm()">Cancel</button>
+        <button class="btn btn-danger" id="confirmActionBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/app.js"></script>
+</body>
+
+</html>
