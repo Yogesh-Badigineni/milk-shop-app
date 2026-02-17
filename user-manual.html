@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MilkFlow — User Manual</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #a5b4fc;
+            --accent: #14b8a6;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --bg: #0f0f1a;
+            --bg-card: rgba(26, 26, 46, 0.85);
+            --bg-section: #1a1a2e;
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #f1f5f9;
+            --text-sec: #94a3b8;
+            --text-muted: #64748b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- Cover Page --- */
+        .cover {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            padding: 48px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(20, 184, 166, 0.06) 0%, transparent 50%);
+            animation: coverGlow 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes coverGlow {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.05);
+            }
+        }
+
+        .cover-logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, var(--primary), #818cf8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            margin-bottom: 32px;
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .cover h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cover .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-sec);
+            margin-bottom: 48px;
+            font-weight: 300;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cover-meta {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cover-meta-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 28px;
+            backdrop-filter: blur(8px);
+        }
+
+        .cover-meta-item .label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .cover-meta-item .value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        /* --- Container --- */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        /* --- Table of Contents --- */
+        .toc {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 64px;
+            backdrop-filter: blur(8px);
+        }
+
+        .toc h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toc-list {
+            list-style: none;
+            counter-reset: toc;
+        }
+
+        .toc-list li {
+            counter-increment: toc;
+            margin-bottom: 4px;
+        }
+
+        .toc-list li a {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--text-sec);
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .toc-list li a:hover {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+        }
+
+        .toc-list li a::before {
+            content: counter(toc, decimal-leading-zero);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--primary);
+            min-width: 28px;
+        }
+
+        .toc-list li a .icon {
+            font-size: 1.2rem;
+        }
+
+        /* --- Section --- */
+        .section {
+            margin-bottom: 64px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            flex-shrink: 0;
+        }
+
+        .section-icon.blue {
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        .section-icon.green {
+            background: rgba(34, 197, 94, 0.15);
+        }
+
+        .section-icon.teal {
+            background: rgba(20, 184, 166, 0.15);
+        }
+
+        .section-icon.yellow {
+            background: rgba(234, 179, 8, 0.15);
+        }
+
+        .section-icon.red {
+            background: rgba(239, 68, 68, 0.15);
+        }
+
+        .section-header h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .section-header h2 span {
+            display: block;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-top: 4px;
+        }
+
+        /* --- Content Elements --- */
+        p {
+            margin-bottom: 16px;
+            color: var(--text-sec);
+            font-size: 0.95rem;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin: 32px 0 12px;
+            color: var(--text);
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 20px 0 8px;
+            color: var(--primary-light);
+        }
+
+        /* --- Steps --- */
+        .steps {
+            list-style: none;
+            counter-reset: steps;
+            margin: 16px 0 24px;
+        }
+
+        .steps li {
+            counter-increment: steps;
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.92rem;
+            color: var(--text-sec);
+            align-items: flex-start;
+            transition: background 0.2s;
+        }
+
+        .steps li:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .steps li::before {
+            content: counter(steps);
+            background: linear-gradient(135deg, var(--primary), #818cf8);
+            color: white;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* --- Info Boxes --- */
+        .info-box {
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin: 16px 0 24px;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            font-size: 0.9rem;
+        }
+
+        .info-box .box-icon {
+            font-size: 1.3rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .info-box.tip {
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+
+        .info-box.warning {
+            background: rgba(234, 179, 8, 0.08);
+            border: 1px solid rgba(234, 179, 8, 0.2);
+            color: #fde68a;
+        }
+
+        .info-box.danger {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .info-box.info {
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: #c7d2fe;
+        }
+
+        /* --- Credential Box --- */
+        .credentials {
+            background: var(--bg-section);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 16px 0 24px;
+        }
+
+        .cred-header {
+            padding: 14px 20px;
+            background: rgba(99, 102, 241, 0.1);
+            font-weight: 600;
+            font-size: 0.88rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cred-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 0.9rem;
+        }
+
+        .cred-row:last-child {
+            border-bottom: none;
+        }
+
+        .cred-row .label {
+            color: var(--text-muted);
+        }
+
+        .cred-row .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        /* --- Feature Grid --- */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin: 16px 0 24px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .feature-card .fc-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .feature-card .fc-title {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .feature-card .fc-desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* --- Keyboard Shortcuts / Code --- */
+        kbd {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            color: var(--text);
+        }
+
+        code {
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--primary-light);
+        }
+
+        strong {
+            color: var(--text);
+        }
+
+        /* --- Divider --- */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 48px 0;
+        }
+
+        /* --- Footer --- */
+        .footer {
+            text-align: center;
+            padding: 48px 24px;
+            border-top: 1px solid var(--border);
+            margin-top: 64px;
+        }
+
+        .footer p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .footer .brand {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        /* --- Print Styles --- */
+        @media print {
+            body {
+                background: white;
+                color: #1a1a2e;
+            }
+
+            .cover {
+                background: white;
+                min-height: auto;
+                padding: 60px 24px;
+                page-break-after: always;
+            }
+
+            .cover::before {
+                display: none;
+            }
+
+            .cover h1 {
+                -webkit-text-fill-color: #4f46e5;
+                color: #4f46e5;
+            }
+
+            .cover .subtitle {
+                color: #64748b;
+            }
+
+            .toc,
+            .section,
+            .info-box,
+            .credentials,
+            .feature-card,
+            .steps li {
+                background: white;
+                border-color: #e2e8f0;
+                color: #334155;
+            }
+
+            p,
+            .steps li,
+            .info-box {
+                color: #475569;
+            }
+
+            h2,
+            h3,
+            h4,
+            strong,
+            .fc-title {
+                color: #1e293b;
+            }
+
+            .cred-row .value {
+                color: #0d9488;
+            }
+
+            kbd {
+                background: #f1f5f9;
+                border-color: #cbd5e1;
+                color: #334155;
+            }
+
+            code {
+                background: #eef2ff;
+                color: #4338ca;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+
+            .cover-logo {
+                box-shadow: none;
+                border: 2px solid #e2e8f0;
+            }
+
+            .section-icon {
+                border: 1px solid #e2e8f0;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .cover h1 {
+                font-size: 2.2rem;
+            }
+
+            .cover .subtitle {
+                font-size: 1rem;
+            }
+
+            .cover-meta {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- =================== COVER PAGE =================== -->
+    <div class="cover">
+        <div class="cover-logo">🥛</div>
+        <h1>MilkFlow</h1>
+        <p class="subtitle">User Manual — Smart Milk Shop Management System</p>
+        <div class="cover-meta">
+            <div class="cover-meta-item">
+                <div class="label">Version</div>
+                <div class="value">2.0 (Security Enhanced)</div>
+            </div>
+            <div class="cover-meta-item">
+                <div class="label">Last Updated</div>
+                <div class="value">February 2026</div>
+            </div>
+            <div class="cover-meta-item">
+                <div class="label">Document Type</div>
+                <div class="value">Complete User Guide</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- =================== TABLE OF CONTENTS =================== -->
+        <div class="toc">
+            <h2>📑 Table of Contents</h2>
+            <ol class="toc-list">
+                <li><a href="#getting-started"><span class="icon">🚀</span> Getting Started</a></li>
+                <li><a href="#login"><span class="icon">🔐</span> Login & Authentication</a></li>
+                <li><a href="#dashboard"><span class="icon">📊</span> Dashboard</a></li>
+                <li><a href="#suppliers"><span class="icon">🤝</span> Supplier Management</a></li>
+                <li><a href="#stock"><span class="icon">📦</span> Stock Entry</a></li>
+                <li><a href="#storage"><span class="icon">🏪</span> Storage Log</a></li>
+                <li><a href="#sales"><span class="icon">💰</span> Sales</a></li>
+                <li><a href="#closing"><span class="icon">📋</span> Day Closing</a></li>
+                <li><a href="#backup"><span class="icon">💾</span> Backup & Restore</a></li>
+                <li><a href="#settings"><span class="icon">⚙️</span> Settings & User Management</a></li>
+                <li><a href="#security"><span class="icon">🛡️</span> Security Features</a></li>
+                <li><a href="#faq"><span class="icon">❓</span> FAQ & Troubleshooting</a></li>
+            </ol>
+        </div>
+
+        <!-- =================== 1. GETTING STARTED =================== -->
+        <div class="section" id="getting-started">
+            <div class="section-header">
+                <div class="section-icon blue">🚀</div>
+                <h2>Getting Started <span>Overview and first-time setup</span></h2>
+            </div>
+
+            <p>Welcome to <strong>MilkFlow</strong> — a complete milk shop management system that helps you track
+                suppliers, manage stock, record sales, and generate daily reports. The app runs entirely in your browser
+                and stores all data locally.</p>
+
+            <h3>Key Features</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="fc-icon">📊</div>
+                    <div class="fc-title">Live Dashboard</div>
+                    <div class="fc-desc">Real-time overview of stock, revenue & activity</div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">🤝</div>
+                    <div class="fc-title">Supplier Tracking</div>
+                    <div class="fc-desc">Manage suppliers, track deliveries & payments</div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">💰</div>
+                    <div class="fc-title">Sales Recording</div>
+                    <div class="fc-desc">Record cash & UPI sales with full history</div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">📋</div>
+                    <div class="fc-title">Day Closing</div>
+                    <div class="fc-desc">Lock daily records with financial summary</div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">💾</div>
+                    <div class="fc-title">Data Backup</div>
+                    <div class="fc-desc">Export & import your data as JSON files</div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">🛡️</div>
+                    <div class="fc-title">Enhanced Security</div>
+                    <div class="fc-desc">Hashed passwords, session timeout & audit logs</div>
+                </div>
+            </div>
+
+            <h3>System Requirements</h3>
+            <p>MilkFlow works on any modern web browser. No internet connection is required after the initial load
+                (fonts may not display without internet). Recommended browsers:</p>
+            <ol class="steps">
+                <li>Google Chrome (version 90+)</li>
+                <li>Microsoft Edge (version 90+)</li>
+                <li>Mozilla Firefox (version 88+)</li>
+                <li>Safari (version 14+)</li>
+            </ol>
+
+            <div class="info-box info">
+                <span class="box-icon">💡</span>
+                <div><strong>Local Storage:</strong> All data is stored in your browser's localStorage. Do not clear
+                    browser data unless you have a backup, or you will lose all records.</div>
+            </div>
+        </div>
+
+        <!-- =================== 2. LOGIN =================== -->
+        <div class="section" id="login">
+            <div class="section-header">
+                <div class="section-icon blue">🔐</div>
+                <h2>Login & Authentication <span>How to sign in to the application</span></h2>
+            </div>
+
+            <p>When you open MilkFlow, you will see the login screen. You need to enter your credentials to access the
+                application.</p>
+
+            <h3>Default Login Credentials</h3>
+            <div class="credentials">
+                <div class="cred-header">👑 Owner Account (Full Access)</div>
+                <div class="cred-row">
+                    <span class="label">Username</span>
+                    <span class="value">owner</span>
+                </div>
+                <div class="cred-row">
+                    <span class="label">Password</span>
+                    <span class="value">Owner@123</span>
+                </div>
+                <div class="cred-row">
+                    <span class="label">Role</span>
+                    <span class="value">Owner</span>
+                </div>
+            </div>
+
+            <div class="credentials">
+                <div class="cred-header">👤 Staff Account (Limited Access)</div>
+                <div class="cred-row">
+                    <span class="label">Username</span>
+                    <span class="value">staff</span>
+                </div>
+                <div class="cred-row">
+                    <span class="label">Password</span>
+                    <span class="value">Staff@123</span>
+                </div>
+                <div class="cred-row">
+                    <span class="label">Role</span>
+                    <span class="value">Staff</span>
+                </div>
+            </div>
+
+            <h3>How to Login</h3>
+            <ol class="steps">
+                <li>Enter your <strong>Username</strong> in the first field</li>
+                <li>Enter your <strong>Password</strong> — click the 👁️ icon to show/hide</li>
+                <li>Select your <strong>Role</strong> (Owner or Staff) from the dropdown</li>
+                <li>Click <strong>🔐 Sign In</strong></li>
+            </ol>
+
+            <div class="info-box warning">
+                <span class="box-icon">⚠️</span>
+                <div><strong>Rate Limiting:</strong> After 5 failed login attempts, your account will be locked for 5
+                    minutes. This prevents unauthorized access through brute force.</div>
+            </div>
+
+            <h3>Owner vs Staff Permissions</h3>
+            <p><strong>Owner</strong> has full access to all features including:</p>
+            <ol class="steps">
+                <li>All data management (suppliers, stock, sales, storage)</li>
+                <li>Day Closing — only owners can close and lock daily records</li>
+                <li>User Management — add, edit, or delete user accounts</li>
+                <li>Settings — modify shop settings and clear all data</li>
+            </ol>
+            <p><strong>Staff</strong> has access to day-to-day operations but cannot close the day, manage users, or
+                clear data.</p>
+        </div>
+
+        <!-- =================== 3. DASHBOARD =================== -->
+        <div class="section" id="dashboard">
+            <div class="section-header">
+                <div class="section-icon green">📊</div>
+                <h2>Dashboard <span>Your daily operations at a glance</span></h2>
+            </div>
+
+            <p>The Dashboard is the first screen you see after logging in. It provides a real-time snapshot of your
+                shop's daily performance.</p>
+
+            <h3>Dashboard Cards</h3>
+            <ol class="steps">
+                <li><strong>Current Stock</strong> — Shows total milk available for sale (in Litres)</li>
+                <li><strong>Today's Revenue</strong> — Total income from today's sales (₹)</li>
+                <li><strong>Today's Sales</strong> — Number of sale transactions today</li>
+                <li><strong>Active Suppliers</strong> — Count of active milk suppliers</li>
+            </ol>
+
+            <h3>Quick Actions</h3>
+            <p>Use the Quick Action buttons to jump directly to frequently used features:</p>
+            <ol class="steps">
+                <li><strong>Add Stock</strong> — Go to Stock Entry page</li>
+                <li><strong>Record Sale</strong> — Go to Sales page</li>
+                <li><strong>Manage Suppliers</strong> — Go to Suppliers page</li>
+                <li><strong>Day Closing</strong> — Go to Day Closing page</li>
+            </ol>
+
+            <h3>Today's Breakdown</h3>
+            <p>The breakdown panel shows detailed financial information: Cash Sales, UPI Sales, Milk Purchased, Milk
+                Sold, and Net Position (Revenue minus Expenses).</p>
+
+            <h3>Recent Activity</h3>
+            <p>A live feed showing the latest 10 actions performed in the app, such as stock added, sales recorded, or
+                suppliers updated.</p>
+        </div>
+
+        <!-- =================== 4. SUPPLIERS =================== -->
+        <div class="section" id="suppliers">
+            <div class="section-header">
+                <div class="section-icon teal">🤝</div>
+                <h2>Supplier Management <span>Add, edit, and track your milk suppliers</span></h2>
+            </div>
+
+            <h3>Adding a New Supplier</h3>
+            <ol class="steps">
+                <li>Navigate to <strong>Suppliers</strong> from the sidebar</li>
+                <li>Click the <strong>➕ Add Supplier</strong> button</li>
+                <li>Fill in the supplier's <strong>Name</strong>, <strong>Contact Number</strong>, and optional
+                    <strong>Address</strong></li>
+                <li>Click <strong>💾 Save Supplier</strong></li>
+            </ol>
+
+            <h3>Editing a Supplier</h3>
+            <ol class="steps">
+                <li>Find the supplier in the table</li>
+                <li>Click the <strong>✏️ Edit</strong> button in the Actions column</li>
+                <li>Update the details and click <strong>💾 Save Supplier</strong></li>
+            </ol>
+
+            <h3>Managing Supplier Status</h3>
+            <p>You can toggle a supplier's status between <strong>Active</strong> and <strong>Inactive</strong> by
+                clicking the 🔴/🟢 button. Inactive suppliers won't appear in the Stock Entry dropdown.</p>
+
+            <h3>Deleting a Supplier</h3>
+            <p>Click the <strong>🗑️ Delete</strong> button. A confirmation dialog will appear. This action cannot be
+                undone.</p>
+
+            <div class="info-box tip">
+                <span class="box-icon">💡</span>
+                <div><strong>Tip:</strong> Instead of deleting a supplier, consider marking them as Inactive. This
+                    preserves their historical data while removing them from active lists.</div>
+            </div>
+        </div>
+
+        <!-- =================== 5. STOCK ENTRY =================== -->
+        <div class="section" id="stock">
+            <div class="section-header">
+                <div class="section-icon blue">📦</div>
+                <h2>Stock Entry <span>Record milk purchases from suppliers</span></h2>
+            </div>
+
+            <p>Every time you receive milk from a supplier, record it here. This automatically updates your available
+                stock.</p>
+
+            <h3>Recording a Stock Entry</h3>
+            <ol class="steps">
+                <li>Navigate to <strong>Stock Entry</strong> from the sidebar</li>
+                <li>Select the <strong>Date</strong> (defaults to today)</li>
+                <li>Choose the <strong>Supplier</strong> from the dropdown (only active suppliers are shown)</li>
+                <li>Enter the <strong>Quantity</strong> in Litres</li>
+                <li>Enter the <strong>Cost Paid</strong> (₹) to the supplier</li>
+                <li>Add optional <strong>Notes</strong> (e.g., "Morning delivery" or "Premium quality")</li>
+                <li>Click <strong>📦 Add Stock Entry</strong></li>
+            </ol>
+
+            <div class="info-box info">
+                <span class="box-icon">📌</span>
+                <div><strong>Auto Stock Update:</strong> When you add a stock entry, the total available stock is
+                    automatically increased by the quantity you entered.</div>
+            </div>
+
+            <h3>Recent Stock Entries</h3>
+            <p>The right panel shows the last 20 stock entries with supplier name, quantity, cost, and date.</p>
+
+            <div class="info-box warning">
+                <span class="box-icon">🔒</span>
+                <div><strong>Day Lock:</strong> You cannot add stock entries for a date that has been closed (Day
+                    Closing). Only today's and future dates are available if today hasn't been closed.</div>
+            </div>
+        </div>
+
+        <!-- =================== 6. STORAGE LOG =================== -->
+        <div class="section" id="storage">
+            <div class="section-header">
+                <div class="section-icon teal">🏪</div>
+                <h2>Storage Log <span>Track milk storage conditions and quantities</span></h2>
+            </div>
+
+            <p>Use the Storage Log to track how much milk is being stored and any relevant conditions (temperature,
+                storage location, etc.).</p>
+
+            <h3>Adding a Storage Log</h3>
+            <ol class="steps">
+                <li>Navigate to <strong>Storage Log</strong> from the sidebar</li>
+                <li>Select the <strong>Date</strong></li>
+                <li>Enter the <strong>Stock Stored</strong> quantity in Litres</li>
+                <li>Add <strong>Notes</strong> about storage conditions (temperature, location, etc.)</li>
+                <li>Click <strong>🏪 Save Storage Log</strong></li>
+            </ol>
+
+            <h3>Storage History</h3>
+            <p>The right panel displays the last 20 storage log entries with date, quantity, time, and notes.</p>
+        </div>
+
+        <!-- =================== 7. SALES =================== -->
+        <div class="section" id="sales">
+            <div class="section-header">
+                <div class="section-icon green">💰</div>
+                <h2>Sales <span>Record and track all milk sales</span></h2>
+            </div>
+
+            <p>The Sales module has two tabs: <strong>New Sale</strong> and <strong>Sales History</strong>.</p>
+
+            <h3>Recording a New Sale</h3>
+            <ol class="steps">
+                <li>Navigate to <strong>Sales</strong> from the sidebar</li>
+                <li>Select the <strong>Date</strong> (defaults to today)</li>
+                <li>Choose the <strong>Payment Mode</strong> — 💵 Cash or 📱 UPI</li>
+                <li>Enter the <strong>Quantity Sold</strong> in Litres</li>
+                <li>Enter the <strong>Amount</strong> (₹)</li>
+                <li>Optionally enter the <strong>Customer Name</strong> (defaults to "Walk-in")</li>
+                <li>Add optional <strong>Notes</strong></li>
+                <li>Click <strong>💰 Record Sale</strong></li>
+            </ol>
+
+            <div class="info-box danger">
+                <span class="box-icon">📉</span>
+                <div><strong>Stock Check:</strong> You cannot sell more milk than what's available in stock. The system
+                    will show an error if you try to sell more than the current stock level.</div>
+            </div>
+
+            <h3>Today's Sales Summary</h3>
+            <p>The side panel shows real-time totals for today: total sales count, cash total, UPI total, and combined
+                revenue.</p>
+
+            <h3>Sales History Tab</h3>
+            <ol class="steps">
+                <li>Click the <strong>📋 Sales History</strong> tab to view all past sales</li>
+                <li>Use the <strong>date filter</strong> to view sales for a specific date</li>
+                <li>Click <strong>🔍 Filter</strong> to apply or <strong>✖ Clear</strong> to reset</li>
+                <li>Delete a sale by clicking the <strong>🗑️</strong> button (this restores the stock)</li>
+            </ol>
+
+            <div class="info-box tip">
+                <span class="box-icon">💡</span>
+                <div><strong>Stock Restoration:</strong> Deleting a sale automatically adds the quantity back to your
+                    available stock.</div>
+            </div>
+        </div>
+
+        <!-- =================== 8. DAY CLOSING =================== -->
+        <div class="section" id="closing">
+            <div class="section-header">
+                <div class="section-icon yellow">📋</div>
+                <h2>Day Closing <span>End-of-day summary and record locking</span></h2>
+            </div>
+
+            <p>Day Closing provides a comprehensive end-of-day financial summary and allows the owner to lock all
+                records for the day.</p>
+
+            <h3>End of Day Summary</h3>
+            <p>The summary grid shows:</p>
+            <ol class="steps">
+                <li><strong>Opening Stock</strong> — Stock at the beginning of the day</li>
+                <li><strong>Purchased</strong> — Total milk purchased today from suppliers</li>
+                <li><strong>Total Sold</strong> — Total milk sold today</li>
+                <li><strong>Closing Stock</strong> — Current remaining stock</li>
+                <li><strong>Cash Revenue</strong> — Total income from cash sales</li>
+                <li><strong>UPI Revenue</strong> — Total income from UPI sales</li>
+                <li><strong>Total Expenses</strong> — Total amount paid to suppliers</li>
+                <li><strong>Net Profit</strong> — Revenue minus Expenses</li>
+            </ol>
+
+            <h3>Closing the Day</h3>
+            <ol class="steps">
+                <li>Review the End of Day Summary to ensure all data is correct</li>
+                <li>Click <strong>🔒 Close Day & Lock Records</strong></li>
+                <li>Confirm by clicking the action button in the confirmation dialog</li>
+            </ol>
+
+            <div class="info-box danger">
+                <span class="box-icon">🔒</span>
+                <div><strong>Important:</strong> Closing the day is <strong>irreversible</strong>. Once closed, you
+                    cannot add, edit, or delete any stock entries or sales for that date. Make sure all data is correct
+                    before closing!</div>
+            </div>
+
+            <div class="info-box warning">
+                <span class="box-icon">👑</span>
+                <div><strong>Owner Only:</strong> Only users with the Owner role can close the day. Staff members can
+                    view the summary but cannot perform the closing action.</div>
+            </div>
+
+            <h3>Past Day Closings</h3>
+            <p>A table at the bottom shows the history of all past day closings with dates, stock movements, revenue,
+                expenses, and profit figures.</p>
+        </div>
+
+        <!-- =================== 9. BACKUP =================== -->
+        <div class="section" id="backup">
+            <div class="section-header">
+                <div class="section-icon blue">💾</div>
+                <h2>Backup & Restore <span>Protect your data with backups</span></h2>
+            </div>
+
+            <h3>Generating a Backup</h3>
+            <ol class="steps">
+                <li>Navigate to <strong>Backup</strong> from the sidebar</li>
+                <li>Click <strong>📥 Download Backup File</strong></li>
+                <li>A JSON file will be downloaded with all your data</li>
+                <li>File naming format: <code>MilkShop_YYYYMMDD_HHMMSS.json</code></li>
+            </ol>
+
+            <div class="info-box tip">
+                <span class="box-icon">💡</span>
+                <div><strong>Best Practice:</strong> Generate a backup everyday before closing the day. Store backup
+                    files in a safe location like Google Drive, OneDrive, or a USB drive.</div>
+            </div>
+
+            <h3>Restoring from Backup</h3>
+            <ol class="steps">
+                <li>Click <strong>📤 Choose Backup File</strong></li>
+                <li>Select a previously generated <code>.json</code> backup file</li>
+                <li>Confirm the restore action in the dialog</li>
+                <li>All current data will be replaced with the backup data</li>
+            </ol>
+
+            <div class="info-box danger">
+                <span class="box-icon">⚠️</span>
+                <div><strong>Warning:</strong> Restoring a backup <strong>replaces ALL current data</strong>. Make sure
+                    you generate a backup of your current data first before restoring an older backup!</div>
+            </div>
+
+            <h3>Backup Log</h3>
+            <p>The Backup Log section at the bottom shows a history of all backup exports and imports with timestamps.
+            </p>
+        </div>
+
+        <!-- =================== 10. SETTINGS =================== -->
+        <div class="section" id="settings">
+            <div class="section-header">
+                <div class="section-icon teal">⚙️</div>
+                <h2>Settings & User Management <span>Configure shop and manage accounts</span></h2>
+            </div>
+
+            <h3>Shop Settings</h3>
+            <ol class="steps">
+                <li>Navigate to <strong>Settings</strong> from the sidebar</li>
+                <li>Update your <strong>Shop Name</strong>, <strong>Address</strong>, <strong>Phone</strong>, and
+                    <strong>Default Milk Price</strong></li>
+                <li>Click <strong>💾 Save Settings</strong></li>
+            </ol>
+
+            <h3>User Management</h3>
+            <p>Manage all login accounts from the User Management section.</p>
+
+            <h4>Adding a New User</h4>
+            <ol class="steps">
+                <li>Click <strong>➕ Add User</strong></li>
+                <li>Enter <strong>Display Name</strong>, <strong>Username</strong>, and <strong>Password</strong></li>
+                <li>Select the <strong>Role</strong> (Owner or Staff)</li>
+                <li>Click <strong>💾 Save User</strong></li>
+            </ol>
+
+            <h4>Password Requirements</h4>
+            <ol class="steps">
+                <li>Minimum 6 characters</li>
+                <li>At least one <strong>uppercase</strong> letter (A-Z)</li>
+                <li>At least one <strong>lowercase</strong> letter (a-z)</li>
+                <li>At least one <strong>number</strong> (0-9)</li>
+            </ol>
+
+            <p>A real-time <strong>password strength meter</strong> shows Weak / Fair / Good / Strong ratings as you
+                type.</p>
+
+            <h4>Editing a User</h4>
+            <p>Click the <strong>✏️</strong> button next to any user. Update their details and set a new password. Note:
+                Since passwords are securely hashed, you must enter a new password when editing.</p>
+
+            <h4>Deleting a User</h4>
+            <p>Click the <strong>🗑️</strong> button. You cannot delete the account you are logged into, and at least
+                one Owner account must always exist.</p>
+
+            <h3>Danger Zone</h3>
+            <p>The <strong>Clear All Data</strong> button permanently deletes all records (suppliers, stock, sales,
+                closings). User accounts are preserved. This action is irreversible — always export a backup first!</p>
+        </div>
+
+        <!-- =================== 11. SECURITY =================== -->
+        <div class="section" id="security">
+            <div class="section-header">
+                <div class="section-icon red">🛡️</div>
+                <h2>Security Features <span>How your data is protected</span></h2>
+            </div>
+
+            <p>MilkFlow v2.0 includes enterprise-grade security features to protect your shop data.</p>
+
+            <h3>Password Security</h3>
+            <ol class="steps">
+                <li><strong>SHA-256 Hashing</strong> — Passwords are hashed with a unique salt using the SHA-256
+                    algorithm. Nobody (not even the app) can see your actual password.</li>
+                <li><strong>Strength Validation</strong> — Passwords must meet minimum complexity requirements
+                    (uppercase, lowercase, number, 6+ characters).</li>
+                <li><strong>Strength Meter</strong> — Visual indicator shows password quality in real-time.</li>
+            </ol>
+
+            <h3>Session Management</h3>
+            <ol class="steps">
+                <li><strong>Auto-Timeout</strong> — Sessions expire after 30 minutes of inactivity</li>
+                <li><strong>Secure Tokens</strong> — Each session uses a cryptographically random token</li>
+                <li><strong>Extend Session</strong> — A warning banner appears before timeout, with an option to extend
+                </li>
+            </ol>
+
+            <h3>Login Protection</h3>
+            <ol class="steps">
+                <li><strong>Rate Limiting</strong> — Maximum 5 failed login attempts in a 15-minute window</li>
+                <li><strong>Lockout</strong> — After 5 failures, the account is locked for 5 minutes</li>
+                <li><strong>Cooldown Timer</strong> — The login screen shows the remaining lockout time</li>
+            </ol>
+
+            <h3>Security Audit Log</h3>
+            <p>Every security-related event is logged in the Audit Log (visible in Settings):</p>
+            <ol class="steps">
+                <li>✅ Successful logins</li>
+                <li>❌ Failed login attempts</li>
+                <li>🚪 Logouts</li>
+                <li>⏰ Session expirations</li>
+                <li>👤 User additions, updates, and deletions</li>
+                <li>🔒 Password changes and migrations</li>
+            </ol>
+
+            <h3>Additional Protections</h3>
+            <ol class="steps">
+                <li><strong>XSS Prevention</strong> — All user input is sanitized to prevent script injection attacks
+                </li>
+                <li><strong>Content Security Policy (CSP)</strong> — Restricts which resources the page can load</li>
+                <li><strong>Input Validation</strong> — Usernames and data are validated against strict patterns</li>
+            </ol>
+        </div>
+
+        <!-- =================== 12. FAQ =================== -->
+        <div class="section" id="faq">
+            <div class="section-header">
+                <div class="section-icon yellow">❓</div>
+                <h2>FAQ & Troubleshooting <span>Common questions and solutions</span></h2>
+            </div>
+
+            <h3>Q: I forgot my password. How do I reset it?</h3>
+            <p>If you have another Owner account, log in with that account and edit the forgotten user from Settings →
+                User Management. If you've lost access to all accounts, you'll need to clear your browser's localStorage
+                (this deletes all data) by opening DevTools (<kbd>F12</kbd>) → Console → typing
+                <code>localStorage.clear()</code> → refreshing the page.</p>
+
+            <h3>Q: Why can't I add stock or sales?</h3>
+            <p>The day may have been closed (locked). Look for the yellow "Day is Closed & Locked" banner at the top.
+                Once a day is closed, no entries can be added for that date.</p>
+
+            <h3>Q: Can I undo a Day Closing?</h3>
+            <p>No, day closing is irreversible. Always verify your data before closing. If you made a mistake, the
+                numbers will be reflected in the next day's opening stock.</p>
+
+            <h3>Q: How do I transfer data to another device?</h3>
+            <ol class="steps">
+                <li>On the old device: Go to Backup → Download Backup File</li>
+                <li>Transfer the <code>.json</code> file to the new device (via pendrive, email, or cloud)</li>
+                <li>On the new device: Open MilkFlow → Backup → Choose Backup File → Select and restore</li>
+            </ol>
+
+            <h3>Q: I see "Session Expired" and got logged out. Why?</h3>
+            <p>For security, MilkFlow automatically logs you out after 30 minutes of inactivity. Simply log back in. If
+                the timeout is annoying, click the "Extend Session" button when the warning banner appears.</p>
+
+            <h3>Q: My account is locked. What do I do?</h3>
+            <p>Wait 5 minutes and try again. The lockout is triggered after 5 incorrect password attempts as a security
+                measure.</p>
+
+            <h3>Q: Will I lose data if I clear browser cache?</h3>
+            <p>Yes! All MilkFlow data is stored in your browser's localStorage. Clearing browser data, cookies, or site
+                data will delete everything. Always keep regular backups!</p>
+
+            <div class="info-box tip">
+                <span class="box-icon">🔑</span>
+                <div><strong>Pro Tip:</strong> Bookmark the MilkFlow page for quick access. Set it as a browser startup
+                    page for your shop computer so it opens automatically every morning!</div>
+            </div>
+        </div>
+
+        <!-- =================== FOOTER =================== -->
+        <div class="footer">
+            <div class="brand">🥛 MilkFlow</div>
+            <p>Smart Milk Shop Management System — Version 2.0</p>
+            <p style="margin-top: 8px;">© 2026 MilkFlow. This user manual is part of the application package.</p>
+        </div>
+
+    </div>
+
+</body>
+
+</html>
