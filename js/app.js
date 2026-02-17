@@ -85,8 +85,26 @@ const MilkApp = (() => {
         { username: 'owner', passwordHash: ownerHash.hash, salt: ownerHash.salt, role: 'owner', name: 'Shop Owner' },
         { username: 'staff', passwordHash: staffHash.hash, salt: staffHash.salt, role: 'staff', name: 'Staff Member' },
       ]);
-    } else {
-      // Migrate plain-text passwords to hashed
+      localStorage.setItem('mf_security_version', '2');
+    } else if (!localStorage.getItem('mf_security_version')) {
+      // Force reset: old data exists without security version marker
+      // Reset users to new strong defaults
+      const ownerHash = await MilkSecurity.hashPassword('Owner@123');
+      const staffHash = await MilkSecurity.hashPassword('Staff@123');
+      const existingUsers = dbGetList(DB_KEYS.users);
+      const updatedUsers = existingUsers.map(u => {
+        if (u.username === 'owner' && u.role === 'owner') {
+          return { username: 'owner', passwordHash: ownerHash.hash, salt: ownerHash.salt, role: 'owner', name: u.name || 'Shop Owner' };
+        }
+        if (u.username === 'staff' && u.role === 'staff') {
+          return { username: 'staff', passwordHash: staffHash.hash, salt: staffHash.salt, role: 'staff', name: u.name || 'Staff Member' };
+        }
+        return u; // Keep custom users
+      });
+      dbSet(DB_KEYS.users, updatedUsers);
+      localStorage.setItem('mf_security_version', '2');
+      MilkSecurity.auditLog('SECURITY_UPGRADE', 'Reset default user credentials to strong passwords', 'system');
+      // Migrate any remaining custom users with plain-text passwords
       await migratePasswords();
     }
     // Default settings
@@ -107,9 +125,18 @@ const MilkApp = (() => {
   async function migratePasswords() {
     const users = dbGetList(DB_KEYS.users);
     let migrated = false;
+
+    // Known weak default passwords that must be upgraded
+    const defaultWeakPasswords = ['owner123', 'staff123', 'admin', 'password', '1234'];
+
     for (let i = 0; i < users.length; i++) {
       if (users[i].password && !users[i].passwordHash) {
-        const result = await MilkSecurity.hashPassword(users[i].password);
+        // If it's a known default/weak password, replace with strong default
+        let newPassword = users[i].password;
+        if (defaultWeakPasswords.includes(users[i].password)) {
+          newPassword = users[i].role === 'owner' ? 'Owner@123' : 'Staff@123';
+        }
+        const result = await MilkSecurity.hashPassword(newPassword);
         users[i].passwordHash = result.hash;
         users[i].salt = result.salt;
         delete users[i].password;
@@ -118,7 +145,7 @@ const MilkApp = (() => {
     }
     if (migrated) {
       dbSet(DB_KEYS.users, users);
-      MilkSecurity.auditLog('PASSWORD_MIGRATION', 'Migrated plain-text passwords to hashed format', 'system');
+      MilkSecurity.auditLog('PASSWORD_MIGRATION', 'Migrated and strengthened passwords', 'system');
     }
   }
 
