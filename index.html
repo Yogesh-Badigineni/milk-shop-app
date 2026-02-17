@@ -7,6 +7,8 @@
   <title>MilkFlow — Smart Milk Shop Management</title>
   <meta name="description"
     content="Complete Milk Shop Management System — Track suppliers, stock, sales, and daily closing with a beautiful modern interface." />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data:;" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥛</text></svg>" />
@@ -28,7 +30,9 @@
         <div class="form-group">
           <label for="loginPass">Password</label>
           <input type="password" id="loginPass" class="form-control" placeholder="Enter password" required />
+          <button type="button" class="password-toggle-btn" id="loginPassToggle" title="Show/Hide Password">👁️</button>
         </div>
+        <div class="login-rate-limit" id="loginRateLimit" style="display:none;"></div>
         <div class="form-group">
           <label for="loginRole">Role</label>
           <select id="loginRole" class="form-control">
@@ -123,6 +127,15 @@
           <button class="header-btn" id="logoutBtn" title="Logout">🚪</button>
         </div>
       </header>
+
+      <!-- Session Timeout Warning -->
+      <div class="session-timeout-banner" id="sessionTimeoutBanner">
+        <span>⏰</span>
+        <div>
+          <strong>Session expiring soon</strong> — Your session will expire due to inactivity.
+          <button class="btn btn-sm btn-primary" id="extendSessionBtn" style="margin-left:8px;">Extend Session</button>
+        </div>
+      </div>
 
       <!-- Page Content -->
       <div class="page-content">
@@ -754,6 +767,23 @@
             </div>
           </div>
 
+          <!-- Security Audit Log -->
+          <div class="card mt-xl">
+            <div class="card-header">
+              <h3>🛡️ Security Audit Log</h3>
+              <span class="badge badge-accent">Last 20 events</span>
+            </div>
+            <div class="card-body" style="max-height:300px;overflow-y:auto;">
+              <div id="auditLogList">
+                <div class="empty-state" style="padding:24px 0;">
+                  <div class="empty-icon">🛡️</div>
+                  <h4>No security events</h4>
+                  <p>Login attempts and security events will appear here</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Danger Zone -->
           <div class="card mt-xl" style="border-color:rgba(239,68,68,0.3);">
             <div class="card-header">
@@ -829,9 +859,14 @@
           </div>
           <div class="form-group">
             <label for="userPassword">Password</label>
-            <input type="text" id="userPassword" class="form-control" placeholder="Enter password" required />
-            <p class="text-muted mt-sm" style="font-size:0.72rem;">Password is shown in plain text for easy management
-            </p>
+            <input type="password" id="userPassword" class="form-control" placeholder="Enter password" required
+              autocomplete="new-password" />
+            <button type="button" class="password-toggle-btn" id="userPassToggle"
+              title="Show/Hide Password">👁️</button>
+            <div class="password-strength-bar" id="passwordStrengthBar">
+              <div class="strength-fill" id="strengthFill"></div>
+            </div>
+            <p class="password-strength-text" id="passwordStrengthText"></p>
           </div>
           <div class="form-group">
             <label for="userRoleSelect">Role</label>
@@ -865,6 +900,7 @@
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
+  <script src="js/security.js"></script>
   <script src="js/app.js"></script>
 </body>
 

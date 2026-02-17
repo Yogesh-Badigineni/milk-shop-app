@@ -76,13 +76,18 @@ const MilkApp = (() => {
   }
 
   // =============== INITIALIZATION ===============
-  function initDefaults() {
-    // Default users
+  async function initDefaults() {
+    // Default users (with hashed passwords)
     if (!dbGet(DB_KEYS.users)) {
+      const ownerHash = await MilkSecurity.hashPassword('Owner@123');
+      const staffHash = await MilkSecurity.hashPassword('Staff@123');
       dbSet(DB_KEYS.users, [
-        { username: 'owner', password: 'owner123', role: 'owner', name: 'Shop Owner' },
-        { username: 'staff', password: 'staff123', role: 'staff', name: 'Staff Member' },
+        { username: 'owner', passwordHash: ownerHash.hash, salt: ownerHash.salt, role: 'owner', name: 'Shop Owner' },
+        { username: 'staff', passwordHash: staffHash.hash, salt: staffHash.salt, role: 'staff', name: 'Staff Member' },
       ]);
+    } else {
+      // Migrate plain-text passwords to hashed
+      await migratePasswords();
     }
     // Default settings
     if (!dbGet(DB_KEYS.settings)) {
@@ -99,20 +104,55 @@ const MilkApp = (() => {
     }
   }
 
-  function init() {
-    initDefaults();
+  async function migratePasswords() {
+    const users = dbGetList(DB_KEYS.users);
+    let migrated = false;
+    for (let i = 0; i < users.length; i++) {
+      if (users[i].password && !users[i].passwordHash) {
+        const result = await MilkSecurity.hashPassword(users[i].password);
+        users[i].passwordHash = result.hash;
+        users[i].salt = result.salt;
+        delete users[i].password;
+        migrated = true;
+      }
+    }
+    if (migrated) {
+      dbSet(DB_KEYS.users, users);
+      MilkSecurity.auditLog('PASSWORD_MIGRATION', 'Migrated plain-text passwords to hashed format', 'system');
+    }
+  }
+
+  async function init() {
+    await initDefaults();
     checkSession();
     updateHeaderDate();
     setInterval(updateHeaderDate, 60000);
+
+    // Set up session expiry handler
+    MilkSecurity.onSessionExpired(() => {
+      toast('warning', 'Session Expired', 'You have been logged out due to inactivity');
+      MilkSecurity.auditLog('SESSION_EXPIRED', 'Session expired due to inactivity', currentUser?.username);
+      logout();
+    });
+
+    // Extend session button
+    const extendBtn = document.getElementById('extendSessionBtn');
+    if (extendBtn) {
+      extendBtn.addEventListener('click', () => {
+        MilkSecurity.refreshSession();
+        document.getElementById('sessionTimeoutBanner').classList.remove('show');
+        toast('success', 'Session Extended', 'Your session has been extended');
+      });
+    }
   }
 
   // =============== AUTH ===============
   let currentUser = null;
 
   function checkSession() {
-    const session = dbGet(DB_KEYS.session);
+    const session = MilkSecurity.getSession();
     if (session) {
-      currentUser = session;
+      currentUser = { username: session.username, role: session.role, name: session.name };
       showApp();
     } else {
       showLogin();
@@ -122,6 +162,8 @@ const MilkApp = (() => {
   function showLogin() {
     document.getElementById('loginScreen').classList.remove('hidden');
     document.getElementById('appContainer').style.display = 'none';
+    // Show rate limit status
+    updateRateLimitDisplay();
   }
 
   function showApp() {
@@ -132,22 +174,53 @@ const MilkApp = (() => {
     checkDayLocked();
   }
 
-  function login(username, password, role) {
-    const users = dbGetList(DB_KEYS.users);
-    const user = users.find(u => u.username === username && u.password === password && u.role === role);
-    if (user) {
-      currentUser = { username: user.username, role: user.role, name: user.name };
-      dbSet(DB_KEYS.session, currentUser);
-      showApp();
-      toast('success', 'Welcome back!', `Logged in as ${user.name}`);
-      return true;
+  function updateRateLimitDisplay() {
+    const rateLimit = MilkSecurity.isLoginLocked();
+    const el = document.getElementById('loginRateLimit');
+    if (el && rateLimit.locked) {
+      el.style.display = '';
+      el.textContent = '🔒 ' + rateLimit.message;
+    } else if (el) {
+      el.style.display = 'none';
     }
+  }
+
+  async function login(username, password, role) {
+    // Check rate limiting first
+    const rateLimit = MilkSecurity.isLoginLocked();
+    if (rateLimit.locked) {
+      toast('error', 'Account Locked', rateLimit.message);
+      updateRateLimitDisplay();
+      return false;
+    }
+
+    const users = dbGetList(DB_KEYS.users);
+    const user = users.find(u => u.username === username && u.role === role);
+
+    if (user && user.passwordHash) {
+      const isValid = await MilkSecurity.verifyPassword(password, user.passwordHash, user.salt);
+      if (isValid) {
+        currentUser = { username: user.username, role: user.role, name: user.name };
+        MilkSecurity.createSession(currentUser);
+        MilkSecurity.recordLoginAttempt(username, true);
+        MilkSecurity.auditLog('LOGIN_SUCCESS', `User logged in as ${role}`, username);
+        showApp();
+        toast('success', 'Welcome back!', `Logged in as ${user.name}`);
+        return true;
+      }
+    }
+
+    // Failed login
+    MilkSecurity.recordLoginAttempt(username, false);
+    MilkSecurity.auditLog('LOGIN_FAILED', `Failed login attempt for role: ${role}`, username);
+    updateRateLimitDisplay();
     return false;
   }
 
   function logout() {
+    MilkSecurity.auditLog('LOGOUT', 'User logged out', currentUser?.username);
     currentUser = null;
-    localStorage.removeItem(DB_KEYS.session);
+    MilkSecurity.destroySession();
     showLogin();
   }
 
@@ -246,14 +319,31 @@ const MilkApp = (() => {
     const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
     const toastEl = document.createElement('div');
     toastEl.className = `toast ${type}`;
-    toastEl.innerHTML = `
-      <span class="toast-icon">${icons[type] || 'ℹ️'}</span>
-      <div class="toast-content">
-        <div class="toast-title">${title}</div>
-        <div class="toast-message">${message}</div>
-      </div>
-      <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
-    `;
+
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'toast-icon';
+    iconSpan.textContent = icons[type] || 'ℹ️';
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'toast-content';
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'toast-title';
+    titleDiv.textContent = title;
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'toast-message';
+    msgDiv.textContent = message;
+    contentDiv.appendChild(titleDiv);
+    contentDiv.appendChild(msgDiv);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'toast-close';
+    closeBtn.textContent = '×';
+    closeBtn.addEventListener('click', () => toastEl.remove());
+
+    toastEl.appendChild(iconSpan);
+    toastEl.appendChild(contentDiv);
+    toastEl.appendChild(closeBtn);
+
     container.appendChild(toastEl);
     setTimeout(() => {
       if (toastEl.parentElement) {
@@ -1039,6 +1129,47 @@ const MilkApp = (() => {
     document.getElementById('shopPhone').value = settings.shopPhone || '';
     document.getElementById('defaultPrice').value = settings.defaultPrice || '';
     renderUsersTable();
+    renderAuditLog();
+  }
+
+  function renderAuditLog() {
+    const logs = MilkSecurity.getAuditLogs().slice(0, 20);
+    const container = document.getElementById('auditLogList');
+    if (!container) return;
+
+    if (logs.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state" style="padding:24px 0;">
+          <div class="empty-icon">🛡️</div>
+          <h4>No security events</h4>
+          <p>Login attempts and security events will appear here</p>
+        </div>`;
+      return;
+    }
+
+    const iconMap = {
+      'LOGIN_SUCCESS': { icon: '✅', cls: 'login-success' },
+      'LOGIN_FAILED': { icon: '❌', cls: 'login-fail' },
+      'LOGOUT': { icon: '🚪', cls: 'action' },
+      'SESSION_EXPIRED': { icon: '⏰', cls: 'login-fail' },
+      'USER_ADDED': { icon: '👤', cls: 'action' },
+      'USER_UPDATED': { icon: '✏️', cls: 'action' },
+      'USER_DELETED': { icon: '🗑️', cls: 'login-fail' },
+      'PASSWORD_MIGRATION': { icon: '🔒', cls: 'action' },
+      'DATA_CLEARED': { icon: '⚠️', cls: 'login-fail' },
+    };
+
+    container.innerHTML = logs.map(log => {
+      const info = iconMap[log.action] || { icon: '🛡️', cls: 'action' };
+      return `
+        <div class="audit-item">
+          <div class="audit-icon ${info.cls}">${info.icon}</div>
+          <div class="audit-details">
+            <div class="audit-action">${escHtml(log.action)}</div>
+            <div class="audit-meta">${escHtml(log.details)} • ${escHtml(log.username)} • ${formatTime(log.timestamp)}</div>
+          </div>
+        </div>`;
+    }).join('');
   }
 
   function saveSettings(shopName, shopAddress, shopPhone, defaultPrice) {
@@ -1052,9 +1183,10 @@ const MilkApp = (() => {
     addActivity('closing', 'Updated shop settings');
   }
 
-  function changePassword(newPass, confirmPass) {
-    if (!newPass || newPass.length < 4) {
-      toast('error', 'Validation Error', 'Password must be at least 4 characters');
+  async function changePassword(newPass, confirmPass) {
+    const validation = MilkSecurity.validatePassword(newPass);
+    if (!validation.valid) {
+      toast('error', 'Weak Password', validation.issues.join('. '));
       return false;
     }
     if (newPass !== confirmPass) {
@@ -1064,8 +1196,12 @@ const MilkApp = (() => {
     const users = dbGetList(DB_KEYS.users);
     const user = users.find(u => u.username === currentUser.username);
     if (user) {
-      user.password = newPass;
+      const hashResult = await MilkSecurity.hashPassword(newPass);
+      user.passwordHash = hashResult.hash;
+      user.salt = hashResult.salt;
+      delete user.password;
       dbSet(DB_KEYS.users, users);
+      MilkSecurity.auditLog('PASSWORD_CHANGED', 'User changed their password', currentUser.username);
       toast('success', 'Password Updated', 'Your password has been changed');
       return true;
     }
@@ -1088,11 +1224,8 @@ const MilkApp = (() => {
           </td>
           <td class="font-mono" style="font-size:0.88rem;">${escHtml(u.username)}</td>
           <td>
-            <div class="flex gap-sm" style="align-items:center;">
-              <span class="font-mono" style="font-size:0.88rem;" id="passDisplay_${idx}">${'•'.repeat(u.password.length)}</span>
-              <button class="btn btn-ghost btn-sm btn-icon" onclick="MilkApp.togglePasswordView(${idx}, '${escHtml(u.password).replace(/'/g, "\\'")}')"
-                title="Show/Hide Password" id="passToggle_${idx}">👁️</button>
-            </div>
+            <span class="password-masked">••••••••</span>
+            <span class="badge badge-success" style="margin-left:8px;">Hashed</span>
           </td>
           <td>
             <span class="badge ${u.role === 'owner' ? 'badge-warning' : 'badge-primary'}">
@@ -1109,19 +1242,7 @@ const MilkApp = (() => {
     }).join('');
   }
 
-  let passwordVisibility = {};
-
-  function togglePasswordView(idx, password) {
-    const display = document.getElementById('passDisplay_' + idx);
-    if (!display) return;
-    if (passwordVisibility[idx]) {
-      display.textContent = '•'.repeat(password.length);
-      passwordVisibility[idx] = false;
-    } else {
-      display.textContent = password;
-      passwordVisibility[idx] = true;
-    }
-  }
+  // Removed togglePasswordView — passwords are no longer visible
 
   function showUserModal(editIndex) {
     const form = document.getElementById('userForm');
@@ -1136,7 +1257,8 @@ const MilkApp = (() => {
         document.getElementById('editUserIndex').value = String(editIndex);
         document.getElementById('userDisplayName').value = user.name;
         document.getElementById('userUsername').value = user.username;
-        document.getElementById('userPassword').value = user.password;
+        document.getElementById('userPassword').value = ''; // Can't prefill hashed password
+        document.getElementById('userPassword').placeholder = 'Enter new password (required)';
         document.getElementById('userRoleSelect').value = user.role;
       }
     } else {
@@ -1145,8 +1267,8 @@ const MilkApp = (() => {
     openModal('userModal');
   }
 
-  function saveUser() {
-    const displayName = document.getElementById('userDisplayName').value.trim();
+  async function saveUser() {
+    const displayName = MilkSecurity.sanitizeInput(document.getElementById('userDisplayName').value.trim());
     const username = document.getElementById('userUsername').value.trim();
     const password = document.getElementById('userPassword').value;
     const role = document.getElementById('userRoleSelect').value;
@@ -1158,52 +1280,71 @@ const MilkApp = (() => {
       return;
     }
 
-    if (username.length < 2) {
-      toast('error', 'Validation Error', 'Username must be at least 2 characters');
+    // Validate username
+    const usernameValidation = MilkSecurity.validateUsername(username);
+    if (!usernameValidation.valid) {
+      toast('error', 'Invalid Username', usernameValidation.message);
       return;
     }
 
-    if (password.length < 4) {
-      toast('error', 'Validation Error', 'Password must be at least 4 characters');
+    // Validate password strength
+    const passwordValidation = MilkSecurity.validatePassword(password);
+    if (!passwordValidation.valid) {
+      toast('error', 'Weak Password', passwordValidation.issues.join('. '));
       return;
     }
 
     const users = dbGetList(DB_KEYS.users);
 
-    // Check duplicate username (exclude current if editing)
+    // Check duplicate username
     const duplicate = users.find((u, i) => u.username === username && u.role === role && i !== editIndex);
     if (duplicate) {
       toast('error', 'Duplicate', `A ${role} with username "${username}" already exists`);
       return;
     }
 
+    // Hash the password
+    const hashResult = await MilkSecurity.hashPassword(password);
+
     if (editIndex >= 0 && editIndex < users.length) {
-      // Update existing user
       const oldUser = users[editIndex];
-      users[editIndex] = { ...oldUser, name: displayName, username, password, role };
+      users[editIndex] = {
+        ...oldUser,
+        name: displayName,
+        username,
+        passwordHash: hashResult.hash,
+        salt: hashResult.salt,
+        role,
+      };
+      delete users[editIndex].password; // Remove legacy field
       dbSet(DB_KEYS.users, users);
 
-      // If editing the currently logged-in user, update session
       if (currentUser && oldUser.username === currentUser.username && oldUser.role === currentUser.role) {
         currentUser.username = username;
         currentUser.name = displayName;
         currentUser.role = role;
-        dbSet(DB_KEYS.session, currentUser);
+        MilkSecurity.createSession(currentUser);
         updateUserInfo();
       }
 
+      MilkSecurity.auditLog('USER_UPDATED', `Updated user: ${displayName}`, currentUser?.username);
       toast('success', 'User Updated', `${displayName}'s credentials have been updated`);
-      addActivity('closing', `Updated user <strong>${displayName}</strong>`);
+      addActivity('closing', `Updated user <strong>${escHtml(displayName)}</strong>`);
     } else {
-      // Add new user
-      users.push({ username, password, role, name: displayName });
+      users.push({
+        username,
+        passwordHash: hashResult.hash,
+        salt: hashResult.salt,
+        role,
+        name: displayName,
+      });
       dbSet(DB_KEYS.users, users);
+      MilkSecurity.auditLog('USER_ADDED', `Added new user: ${displayName} (${role})`, currentUser?.username);
       toast('success', 'User Added', `${displayName} can now log in as ${role}`);
-      addActivity('closing', `Added new user <strong>${displayName}</strong> (${role})`);
+      addActivity('closing', `Added new user <strong>${escHtml(displayName)}</strong> (${role})`);
     }
 
     closeModal('userModal');
-    passwordVisibility = {};
     renderUsersTable();
   }
 
@@ -1232,9 +1373,9 @@ const MilkApp = (() => {
         const updated = dbGetList(DB_KEYS.users);
         updated.splice(index, 1);
         dbSet(DB_KEYS.users, updated);
+        MilkSecurity.auditLog('USER_DELETED', `Deleted user: ${user.name} (${user.username})`, currentUser?.username);
         toast('success', 'User Deleted', `${user.name} has been removed`);
-        addActivity('alert', `Deleted user <strong>${user.name}</strong>`);
-        passwordVisibility = {};
+        addActivity('alert', `Deleted user <strong>${escHtml(user.name)}</strong>`);
         renderUsersTable();
       });
   }
@@ -1281,16 +1422,54 @@ const MilkApp = (() => {
     init();
 
     // Login form
-    document.getElementById('loginForm').addEventListener('submit', (e) => {
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const user = document.getElementById('loginUser').value.trim();
+      const user = MilkSecurity.sanitizeInput(document.getElementById('loginUser').value.trim());
       const pass = document.getElementById('loginPass').value;
       const role = document.getElementById('loginRole').value;
-      if (!login(user, pass, role)) {
+      const result = await login(user, pass, role);
+      if (!result) {
         document.getElementById('loginError').classList.add('show');
         setTimeout(() => document.getElementById('loginError').classList.remove('show'), 3000);
       }
     });
+
+    // Password toggle buttons
+    const loginPassToggle = document.getElementById('loginPassToggle');
+    if (loginPassToggle) {
+      loginPassToggle.addEventListener('click', () => {
+        const passInput = document.getElementById('loginPass');
+        passInput.type = passInput.type === 'password' ? 'text' : 'password';
+        loginPassToggle.textContent = passInput.type === 'password' ? '👁️' : '🙈';
+      });
+    }
+
+    const userPassToggle = document.getElementById('userPassToggle');
+    if (userPassToggle) {
+      userPassToggle.addEventListener('click', () => {
+        const passInput = document.getElementById('userPassword');
+        passInput.type = passInput.type === 'password' ? 'text' : 'password';
+        userPassToggle.textContent = passInput.type === 'password' ? '👁️' : '🙈';
+      });
+    }
+
+    // Password strength meter
+    const userPasswordInput = document.getElementById('userPassword');
+    if (userPasswordInput) {
+      userPasswordInput.addEventListener('input', () => {
+        const strength = MilkSecurity.getPasswordStrength(userPasswordInput.value);
+        const fill = document.getElementById('strengthFill');
+        const text = document.getElementById('passwordStrengthText');
+        if (fill) {
+          fill.style.width = (strength.level * 25) + '%';
+          fill.style.background = strength.color;
+        }
+        if (text) {
+          text.textContent = userPasswordInput.value ? `Strength: ${strength.label}` : '';
+          text.style.color = strength.color;
+        }
+      });
+    }
 
     // Navigation
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -1418,6 +1597,6 @@ const MilkApp = (() => {
     showUserModal,
     saveUser,
     deleteUserConfirm,
-    togglePasswordView,
+    togglePasswordView: () => { },  // Deprecated — passwords are no longer viewable
   };
 })();
